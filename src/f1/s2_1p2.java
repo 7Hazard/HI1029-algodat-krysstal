@@ -1,6 +1,5 @@
 package f1;
 
-
 import java.util.ArrayList;
 
 public class s2_1p2 {

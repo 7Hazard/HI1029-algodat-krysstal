@@ -10,7 +10,5 @@ public class nb0 {
 
         array.remove(1);
         System.out.println(array);
-
-
     }
 }
