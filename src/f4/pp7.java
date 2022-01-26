@@ -12,12 +12,12 @@ public class pp7 {
         String line;
         Scanner in = new Scanner(System.in);
         while (true) {
-            System.out.println("Enter a postfix expression to evaluate");
+            System.out.println("Enter an infix expression to evaluate");
             line = in.nextLine();
             if (!line.equals("")) {
                 try {
                     var postfix = infixToPostfix(line);
-                    System.out.println(postfix);
+                    System.out.println("Postfix equivalent: "+postfix);
                     int result = evaluator.eval(postfix);
                     System.out.println("Value is " + result);
                 } catch (Error ex) {

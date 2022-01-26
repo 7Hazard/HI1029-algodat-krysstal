@@ -4,29 +4,31 @@ import java.util.*;
 
 class nb7_2 {
     public static void main(String[] args) {
-//        String line;
-//        Scanner in = new Scanner(System.in);
-//        while (true) {
-//            System.out.println("Enter an infix expression to evaluate");
-//            line = in.nextLine();
-//            if (!line.equals("")) {
-//                try {
-//                    var evaluator = new PostfixEval.InfixEvaluator(line);
-//                    System.out.println("Value is " + evaluator.eval());
-//                } catch (Error ex) {
-//                    System.out.println("Syntax error " + ex.getMessage());
-//                }
-//            } else {
-//                break;
-//            }
-//        }
+        String line;
+        Scanner in = new Scanner(System.in);
+        while (true) {
+            System.out.println("Enter an infix expression to evaluate");
+            line = in.nextLine();
+            if (!line.equals("")) {
+                try {
+                    var postfix = new InfixConverter().infixToPostfix(line);
+                    System.out.println("Value is " + new PostfixEval().eval(postfix));
+                } catch (Error ex) {
+                    System.out.println("Syntax error " + ex.getMessage());
+                }
+            } else {
+                break;
+            }
+        }
+    }
+
+    private static final String OPERATORS = "+-*/()";
+    private static boolean isOperator(char ch) {
+        return OPERATORS.indexOf(ch) != -1;
     }
 
     public static class PostfixEval {
-        private static final String OPERATORS = "+-*/";
-        private static boolean isOperator(char ch) {
-            return OPERATORS.indexOf(ch) != -1;
-        }
+
         private Stack<Integer> operandStack = new Stack<>();
 
         private void evalOp(char op) {
@@ -59,48 +61,73 @@ class nb7_2 {
                 throw new Error("Syntax Error: The stack is empty");
             }
         }
+    }
+    public static class InfixConverter {
+        static int precedence(char op) {
+            return switch (op) {
+                case '+', '-' -> 1;
+                case '*', '/' -> 2;
+                case '(', ')' -> -1;
+                default -> 0;
+            };
+        }
 
-        public static class InfixEvaluator {
-            ArrayList<String> expressions = new ArrayList<>();
+        Stack<Character> opstack = new Stack<>();
+        StringBuilder postfix = new StringBuilder();
 
-            InfixEvaluator(String infix) {
-
-            }
-
-            static int precedence(char op) {
-                return switch (op) {
-                    case '+', '-' -> 1;
-                    case '*', '/' -> 2;
-                    default -> 0;
-                };
-            }
-
-            private static String infixToPostfix(String infix) {
-                var postfix = new StringBuilder();
-                var opstack = new Stack<Character>();
-                String[] tokens = infix.split(" +");
-                for (String token : tokens) {
-                    var firstChar = token.charAt(0);
-                    if (isOperator(firstChar)) {
-                        if (!opstack.empty()) {
-                            var topOp = opstack.peek();
-                            while (!opstack.empty() && precedence(firstChar) <= precedence(topOp)) {
-                                postfix.append(" ").append(opstack.pop());
-                                if (!opstack.empty())
-                                    topOp = opstack.peek();
-                            }
-                        }
-                        opstack.push(firstChar);
-                    } else if (Character.isDigit(firstChar)){
-                        if (!postfix.isEmpty()) postfix.append(" ");
-                        postfix.append(Integer.parseInt(token));
+        public String infixToPostfix(String expression) {
+            try {
+                Scanner scan = new Scanner(expression);
+                String nextToken;
+                while ((nextToken = scan.findInLine("[]\\p{L}\\p{N}]+|[-+/\\*()]")) != null) {
+                    char firstChar = nextToken.charAt(0);
+                    if (Character.isJavaIdentifierStart(firstChar) || Character.isDigit(firstChar)) {
+                        postfix.append(nextToken);
+                        postfix.append(' ');
+                    } else if (isOperator(firstChar)) {
+                        processOperator(firstChar);
+                    } else {
+                        throw new Error("Unexpected Character Encountered:" + firstChar);
                     }
-                    else
-                        throw new Error("Syntax error");
                 }
-                while (!opstack.empty())
-                    postfix.append(" " + opstack.pop());
+
+                while (!opstack.empty()) {
+                    char op = opstack.pop();
+                    if (op == '(') throw new Error("Unmatched opening parenthesis");
+                    postfix.append(op);
+                    postfix.append(' ');
+                }
+
                 return postfix.toString();
+
+            } catch (EmptyStackException ex) {
+                throw new Error("Syntax Error: the stack is empty");
+            }
+        }
+
+        private void processOperator(char op) {
+            if (opstack.empty() || op == '(') {
+                opstack.push(op);
+            } else {
+                char topOp = opstack.peek();
+                if (precedence(op) > precedence(topOp)) {
+                    opstack.push(op);
+                } else {
+                    while (!opstack.empty() && precedence(op) <= precedence(topOp)) {
+                        opstack.pop();
+                        if (topOp == '(') {
+                            break;
+                        }
+                        postfix.append(topOp);
+                        postfix.append(' ');
+                        if (!opstack.empty()) {
+                            topOp = opstack.peek();
+                        }
+                    }
+                    if (op != ')') {
+                        opstack.push(op);
+                    }
+                }
             }
         }
     }
